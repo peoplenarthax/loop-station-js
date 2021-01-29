@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
+import { audioManager, AudioManagerContext } from '../../providers/audio';
 import { AudioVisualiser } from './visualizer';
 
 export class Analyser extends Component<
   { bars: boolean },
   { audioData: Uint8Array }
 > {
+  static contextType = AudioManagerContext;
   audioContext: AudioContext | undefined;
   analyser: AnalyserNode | undefined;
   dataArray: Uint8Array | undefined;
@@ -17,16 +19,16 @@ export class Analyser extends Component<
   }
 
   componentDidMount = async () => {
-    const audio = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    this.audioContext = new AudioContext();
-    this.analyser = this.audioContext.createAnalyser();
+    // const audio = await navigator.mediaDevices.getUserMedia({
+    //   audio: true,
+    //   video: false,
+    // });
+    // this.audioContext = new AudioContext();
+    this.analyser = audioManager.getChannel(1)?.audioContext.createAnalyser();
 
     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-    this.source = this.audioContext.createMediaStreamSource(audio);
-    this.source.connect(this.analyser);
+    // this.source = this.audioContext.createMediaStreamSource(audio);
+    audioManager.getChannel(1)?.source.connect(this.analyser);
     this.rafId = requestAnimationFrame(this.tick);
   };
 

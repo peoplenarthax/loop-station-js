@@ -1,6 +1,7 @@
-import { impulseResponse, slinky, bath } from './impulse';
+import { impulseResponse, slinky } from '../sound/impulse';
+import { Channel } from './ChannelManager';
 
-type ChannelId = 1 | 2 | 3 | 4 | 5;
+export type ChannelId = 1 | 2 | 3 | 4 | 5;
 type AudioFilter = {
   source: MediaElementAudioSourceNode;
   reverb: AudioNode;
@@ -9,26 +10,13 @@ type AudioFilter = {
 const reverbs = {
   impulseResponse,
   slinky,
-  bath,
 } as const;
-
-const base64ToArrayBuffer = (base64: string) => {
-  const binaryString = atob(base64);
-  const byteArray = binaryString
-    .split('')
-    .map((char: string) => char.charCodeAt(0));
-
-  const bytes = new Uint8Array(byteArray);
-
-  return bytes.buffer;
-};
-
 export class AudioManager {
   private mediaRecorder: any;
   private audioBuffer: BlobPart[] = [];
   private audio: HTMLAudioElement[] | undefined[] = [];
   private audioFilter: AudioFilter[] = [];
-  private audioContext: AudioContext[] | undefined[] = [];
+  private channel: Channel[] | undefined[] = [];
 
   constructor() {
     navigator.mediaDevices
@@ -42,7 +30,7 @@ export class AudioManager {
       });
   }
 
-  record = (channelId: ChannelId, reverb = 'impulseResponse') => {
+  record = (channelId: ChannelId) => {
     this.mediaRecorder.start();
 
     this.mediaRecorder.onstop = () => {
@@ -54,34 +42,30 @@ export class AudioManager {
       const audioUrl = URL.createObjectURL(blob);
       this.audio[channelId] = new Audio(audioUrl);
 
-      this.createAudioFilter(channelId, reverb);
+      this.createChannel(channelId);
     };
   };
 
-  createAudioFilter = async (
-    channelId: ChannelId,
-    reverbId: keyof typeof reverbs,
-  ) => {
-    if (!this.audioContext[channelId]) {
-      this.audioContext[channelId] = new AudioContext();
+  createChannel = async (channelId: ChannelId) => {
+    if (!this.channel[channelId]) {
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaElementSource(
+        this.audio[channelId]!,
+      );
+      console.log('Creating channel');
+      const channel = new Channel({ source, context: audioContext });
+      this.channel[channelId] = channel;
+    } else {
+      this.channel[channelId]?.setSource(this.audio[channelId]!);
     }
+  };
 
-    const source = this.audioContext[channelId]!.createMediaElementSource(
-      this.audio[channelId]!,
-    );
+  hasChannel = (channelId: ChannelId): boolean => {
+    return !!this.channel[channelId];
+  };
 
-    let reverb = this.audioContext[channelId]!.createConvolver();
-    reverb.buffer = await this.audioContext[channelId]!.decodeAudioData(
-      base64ToArrayBuffer(reverbs[reverbId]),
-    );
-
-    source.connect(reverb);
-    reverb.connect(this.audioContext[channelId]!.destination);
-
-    this.audioFilter[channelId] = {
-      source,
-      reverb,
-    };
+  getChannel = (channelId: ChannelId): Channel | undefined => {
+    return this.channel[channelId];
   };
 
   stopRecording = () => {
