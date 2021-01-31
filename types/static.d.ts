@@ -57,3 +57,4 @@ declare module '*.png' {
 }
 
 /* CUSTOM: ADD YOUR OWN HERE */
+declare var MediaRecorder: any;

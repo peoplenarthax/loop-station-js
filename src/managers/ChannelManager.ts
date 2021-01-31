@@ -1,99 +1,99 @@
-import { impulseResponse } from '../sound/impulse';
+import { Highshelf } from '../audio-nodes/highshelf';
+import type { IAudioNode } from '../audio-nodes/audio-node.base';
+import { Highpass } from '../audio-nodes/highpass';
+import { Lowpass } from '../audio-nodes/lowpass';
+import { Reverb } from '../audio-nodes/reverb';
+import { PingPong } from '../audio-nodes/pingpong';
 
 type ChannelConstructor = {
   context: AudioContext;
   source: MediaElementAudioSourceNode;
 };
 
-const base64ToArrayBuffer = (base64: string) => {
-  const binaryString = atob(base64);
-  const byteArray = binaryString
-    .split('')
-    .map((char: string) => char.charCodeAt(0));
-
-  const bytes = new Uint8Array(byteArray);
-
-  return bytes.buffer;
-};
-
 export enum AudioNodeName {
   reverb = 'reverb',
+  lowpass = 'lowpass',
+  highpass = 'highpass',
+  highshelf = 'highshelf',
+  pingpong = 'pingpong',
 }
-export type ChannelNode = any;
 
+const FILTER_MAP: {
+  [key in AudioNodeName]: (context: AudioContext) => IAudioNode;
+} = {
+  reverb: (context: AudioContext) => new Reverb(context),
+  lowpass: (context: AudioContext) => new Lowpass(context),
+  highpass: (context: AudioContext) => new Highpass(context),
+  highshelf: (context: AudioContext) => new Highshelf(context),
+  pingpong: (context: AudioContext) => new PingPong(context),
+};
+
+export type ChannelNode = any;
 export class Channel {
   public source: MediaElementAudioSourceNode;
   public audioContext: AudioContext;
-  private reverb: ConvolverNode | undefined;
-  public reverbOpts: { impulse: string; normalize: boolean } = {
-    impulse: impulseResponse,
-    normalize: true,
-  };
-  private filters: AudioNodeName[] = [];
+  public audioNodes: any = {};
+  private filters: string[] = [];
 
   constructor({ context, source }: ChannelConstructor) {
     this.source = source;
     this.audioContext = context;
 
     this.applyFilters();
-    this.createReverb();
-  }
-
-  async createReverb() {
-    this.reverb = this.audioContext.createConvolver();
-    this.reverb.buffer = await this.audioContext.decodeAudioData(
-      base64ToArrayBuffer(this.reverbOpts.impulse),
-    );
-    this.reverb.normalize = this.reverbOpts.normalize;
-    // this.source.connect(reverb);
-    // reverb.connect(this.audioContext.destination);
-  }
-
-  async setReverb(opts: { impulse?: string; disableNormalization?: boolean }) {
-    if (this.reverb) {
-      this.reverb.buffer = await this.audioContext.decodeAudioData(
-        base64ToArrayBuffer(this.reverbOpts.impulse),
-      );
-      this.reverb.normalize = !!this.reverbOpts.normalize;
-    }
   }
 
   setSource(audio: HTMLMediaElement) {
     this.source = this.audioContext.createMediaElementSource(audio);
 
-    this.applyFilters(this.filters);
+    this.applyFilters();
   }
 
-  applyFilters(filters: AudioNodeName[] = []) {
-    console.log('Creating filters');
+  addAudioNode(audioNodeName: AudioNodeName): string {
+    const audioNode = FILTER_MAP[audioNodeName](this.audioContext);
+    this.audioNodes[audioNode.name] = audioNode;
+    if (this.filters.length > 0) {
+      this.audioNodes[this.filters[this.filters.length - 1]].output.disconnect(
+        this.audioContext.destination,
+      );
+    }
+    this.filters.push(audioNode.name);
 
-    if (filters.length === 0) {
-      console.log('length 0');
+    this.applyFilters();
+    return audioNode.name;
+  }
 
+  getAudioNodeComponent(name: string) {
+    return {
+      component: this.audioNodes[name].component,
+      props: this.audioNodes[name].props,
+    };
+  }
+
+  applyFilters() {
+    if (this.filters.length === 0) {
       this.source.connect(this.audioContext.destination);
       return;
     }
 
     if (this.filters.length === 0) {
-      console.log('Disconnect');
       this.source.disconnect(this.audioContext.destination);
     }
 
-    for (let id = 0; id < filters.length; id++) {
-      console.log('Creating filters for ', filters[id]);
-
+    for (let id = 0; id < this.filters.length; id++) {
       const nodeToConnectId = id - 1;
 
-      if (nodeToConnectId) {
-        this.source.connect(this[filters[id]] as AudioNode);
+      if (nodeToConnectId < 0) {
+        this.source.connect(this.audioNodes[this.filters[id]].input);
         continue;
       }
 
-      this[filters[id - 1]]?.connect(this[filters[id]] as AudioNode);
+      this.audioNodes[this.filters[nodeToConnectId]].output.connect(
+        this.audioNodes[this.filters[id]].input,
+      );
     }
 
-    this[filters[filters.length - 1]]?.connect(this.audioContext.destination);
-
-    this.filters = filters;
+    this.audioNodes[this.filters[this.filters.length - 1]].output.connect(
+      this.audioContext.destination,
+    );
   }
 }

@@ -1,4 +1,3 @@
-import { impulseResponse, slinky } from '../sound/impulse';
 import { Channel } from './ChannelManager';
 
 export type ChannelId = 1 | 2 | 3 | 4 | 5;
@@ -7,10 +6,6 @@ type AudioFilter = {
   reverb: AudioNode;
 };
 
-const reverbs = {
-  impulseResponse,
-  slinky,
-} as const;
 export class AudioManager {
   private mediaRecorder: any;
   private audioBuffer: BlobPart[] = [];
@@ -40,6 +35,7 @@ export class AudioManager {
       this.audioBuffer = [];
 
       const audioUrl = URL.createObjectURL(blob);
+      this.audio[channelId]?.pause();
       this.audio[channelId] = new Audio(audioUrl);
 
       this.createChannel(channelId);
@@ -52,7 +48,7 @@ export class AudioManager {
       const source = audioContext.createMediaElementSource(
         this.audio[channelId]!,
       );
-      console.log('Creating channel');
+
       const channel = new Channel({ source, context: audioContext });
       this.channel[channelId] = channel;
     } else {
