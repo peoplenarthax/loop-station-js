@@ -4,6 +4,10 @@ import { Highpass } from '../audio-nodes/highpass';
 import { Lowpass } from '../audio-nodes/lowpass';
 import { Reverb } from '../audio-nodes/reverb';
 import { PingPong } from '../audio-nodes/pingpong';
+import { Gain } from '../audio-nodes/gain';
+import { DynamicCompressor } from '../audio-nodes/compressor';
+import { Lowshelf } from '../audio-nodes/lowshelf';
+import { DubDelay } from '../audio-nodes/ring-modulator';
 
 type ChannelConstructor = {
   context: AudioContext;
@@ -16,6 +20,10 @@ export enum AudioNodeName {
   highpass = 'highpass',
   highshelf = 'highshelf',
   pingpong = 'pingpong',
+  gain = 'gain',
+  compressor = 'compressor',
+  lowshelf = 'lowshelf',
+  ringmodulator = 'ringmodulator',
 }
 
 const FILTER_MAP: {
@@ -26,6 +34,10 @@ const FILTER_MAP: {
   highpass: (context: AudioContext) => new Highpass(context),
   highshelf: (context: AudioContext) => new Highshelf(context),
   pingpong: (context: AudioContext) => new PingPong(context),
+  gain: (context: AudioContext) => new Gain(context),
+  compressor: (context: AudioContext) => new DynamicCompressor(context),
+  lowshelf: (context: AudioContext) => new Lowshelf(context),
+  ringmodulator: (context: AudioContext) => new DubDelay(context),
 };
 
 export type ChannelNode = any;
@@ -55,11 +67,59 @@ export class Channel {
       this.audioNodes[this.filters[this.filters.length - 1]].output.disconnect(
         this.audioContext.destination,
       );
+    } else {
+      this.source.disconnect(this.audioContext.destination);
     }
     this.filters.push(audioNode.name);
 
     this.applyFilters();
     return audioNode.name;
+  }
+
+  // TODO: Refactor remove
+  removeAudioNode(nodeName: string) {
+    const filters = Object.keys(this.audioNodes);
+    const index = filters.findIndex((key) => key === nodeName);
+
+    if (index === 0) {
+      if (filters.length === 1) {
+        this.source.disconnect(this.audioNodes[nodeName].input);
+
+        delete this.audioNodes[nodeName];
+
+        this.source.connect(this.audioContext.destination);
+        return;
+      }
+      this.source.disconnect(this.audioNodes[nodeName].input);
+
+      delete this.audioNodes[nodeName];
+
+      this.source.connect(this.audioNodes[filters[1]].input);
+      return;
+    }
+
+    if (index !== filters.length - 1) {
+      this.audioNodes[filters[index - 1]].output.disconnect(
+        this.audioNodes[nodeName].input,
+      );
+
+      delete this.audioNodes[nodeName];
+
+      this.audioNodes[filters[index - 1]].output.connect(
+        this.audioNodes[filters[index + 1]].input,
+      );
+      return;
+    }
+
+    this.audioNodes[filters[index - 1]].output.disconnect(
+      this.audioNodes[nodeName].input,
+    );
+
+    delete this.audioNodes[nodeName];
+
+    this.audioNodes[filters[index - 1]].output.connect(
+      this.audioContext.destination,
+    );
   }
 
   getAudioNodeComponent(name: string) {
@@ -73,10 +133,6 @@ export class Channel {
     if (this.filters.length === 0) {
       this.source.connect(this.audioContext.destination);
       return;
-    }
-
-    if (this.filters.length === 0) {
-      this.source.disconnect(this.audioContext.destination);
     }
 
     for (let id = 0; id < this.filters.length; id++) {

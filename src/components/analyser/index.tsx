@@ -50,6 +50,7 @@ export class Analyser extends Component<
   updateChannel = (e) => {
     const value = e.currentTarget.value;
     this.channelId = value;
+    this.step = null;
     this.updateAnalyser();
   };
 

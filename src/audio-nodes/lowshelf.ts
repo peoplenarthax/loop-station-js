@@ -1,12 +1,12 @@
-import { LowPassController } from '../components/node-controllers/PassFilterController';
+import { ShelfFilterController } from '../components/node-controllers/ShelfFilterController';
 import { IAudioNode } from './audio-node.base';
 
-export class Highpass extends IAudioNode {
+export class Lowshelf extends IAudioNode {
   public audioNode: BiquadFilterNode;
-  public component = LowPassController;
+  public component = ShelfFilterController;
 
   constructor(audioContext: AudioContext) {
-    super('highpass', audioContext);
+    super('lowshelf', audioContext);
     this.audioNode = audioContext.createBiquadFilter();
 
     this.input = this.audioNode;
@@ -16,15 +16,15 @@ export class Highpass extends IAudioNode {
   }
 
   initAudioNode = async () => {
-    this.audioNode.type = 'highpass';
+    this.audioNode.type = 'lowshelf';
     this.audioNode.frequency.value = 400;
-    this.audioNode.Q.value = 10;
+    this.audioNode.gain.value = 10;
   };
 
   get props() {
     return {
-      onChangeQ: (value: number) => {
-        this.audioNode.Q.value = value;
+      onChangeGain: (value: number) => {
+        this.audioNode.gain.value = value;
       },
       onChangeFreq: (value: number) => {
         this.audioNode.frequency.value = value;

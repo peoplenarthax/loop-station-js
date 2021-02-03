@@ -3,12 +3,15 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import './index.css';
 import { AudioProvider } from './providers/audio';
+import { ChannelProvider } from './providers/channel';
 
 ReactDOM.render(
   <React.StrictMode>
-    <AudioProvider>
-      <App />
-    </AudioProvider>
+    <ChannelProvider>
+      <AudioProvider>
+        <App />
+      </AudioProvider>
+    </ChannelProvider>
   </React.StrictMode>,
   document.getElementById('root'),
 );

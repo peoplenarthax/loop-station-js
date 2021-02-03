@@ -3,7 +3,7 @@ import { IAudioNode } from './audio-node.base';
 
 export class Lowpass extends IAudioNode {
   public audioNode: BiquadFilterNode;
-  public component = LowPassController('Lowpass');
+  public component = LowPassController;
 
   constructor(audioContext: AudioContext) {
     super('lowpass', audioContext);

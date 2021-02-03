@@ -3,7 +3,7 @@ import { IAudioNode } from './audio-node.base';
 
 export class Highshelf extends IAudioNode {
   public audioNode: BiquadFilterNode;
-  public component = ShelfFilterController('Highshelf');
+  public component = ShelfFilterController;
 
   constructor(audioContext: AudioContext) {
     super('highshelf', audioContext);

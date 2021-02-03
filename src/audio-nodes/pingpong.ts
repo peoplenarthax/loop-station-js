@@ -1,8 +1,8 @@
-import { ShelfFilterController } from '../components/node-controllers/ShelfFilterController';
+import { PingPongController } from '../components/node-controllers/PingPongController';
 import { IAudioNode } from './audio-node.base';
 
 export class PingPong extends IAudioNode {
-  public component = null;
+  public component = PingPongController;
 
   private merger!: ChannelMergerNode;
   private leftDelay!: DelayNode;
@@ -18,20 +18,23 @@ export class PingPong extends IAudioNode {
   }
 
   createEffect() {
-    this.merger = this.audioContext.createChannelMerger(2);
+    this.splitter = this.audioContext.createChannelSplitter(2);
+
     this.leftDelay = this.audioContext.createDelay();
     this.rightDelay = this.audioContext.createDelay();
+
     this.leftFeedback = this.audioContext.createGain();
     this.rightFeedback = this.audioContext.createGain();
-    this.splitter = this.audioContext.createChannelSplitter(2);
+
+    this.merger = this.audioContext.createChannelMerger(2);
 
     this.splitter.connect(this.leftDelay, 0);
 
     this.leftDelay.delayTime.value = 0.3;
     this.rightDelay.delayTime.value = 0.3;
 
-    this.leftFeedback.gain.value = 0.4;
-    this.rightFeedback.gain.value = 0.4;
+    this.leftFeedback.gain.value = 0.5;
+    this.rightFeedback.gain.value = 0.5;
 
     this.leftDelay.connect(this.leftFeedback);
     this.leftFeedback.connect(this.rightDelay);
@@ -47,6 +50,11 @@ export class PingPong extends IAudioNode {
   }
 
   get props() {
-    return {};
+    return {
+      onChangeDelay: (delay: number) => {
+        this.leftDelay.delayTime.value = delay;
+        this.rightDelay.delayTime.value = delay;
+      },
+    };
   }
 }

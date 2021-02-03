@@ -1,7 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
+import { ChannelManagerContext } from '../../providers/channel';
 import styled from 'styled-components';
 import { AudioNodeName, ChannelNode } from '../../managers/ChannelManager';
 import { AudioManagerContext } from '../../providers/audio';
+import { Name } from '../node-controllers/components';
 import { ReverbController } from '../node-controllers/ReverbController';
 import { TogglePlayButton } from '../toggle-play-button';
 
@@ -29,7 +31,7 @@ const Select = styled.select`
   appearance: none;
 `;
 
-const AddButton = styled.button`
+const Button = styled.button`
   height: 30px;
   width: 30px;
   border: none;
@@ -41,13 +43,19 @@ const AddButton = styled.button`
 export const ChannelBoard = ({ channel }: { channel: 1 | 2 | 3 | 4 | 5 }) => {
   const selectRef = useRef<HTMLSelectElement>(null);
   const { audioManager } = useContext(AudioManagerContext);
+  const channelContext = useContext(ChannelManagerContext);
+  console.log(channelContext);
   const [newestNode, setNode] = useState<AudioNodeName>();
   const [options, setOptions] = useState<AudioNodeName[]>([
     AudioNodeName.reverb,
     AudioNodeName.lowpass,
     AudioNodeName.highpass,
+    AudioNodeName.lowshelf,
     AudioNodeName.highshelf,
     AudioNodeName.pingpong,
+    AudioNodeName.gain,
+    AudioNodeName.compressor,
+    AudioNodeName.ringmodulator,
   ]);
   const [controllers, setControllers] = useState<string[]>([]);
   const channelManager = audioManager.getChannel(channel);
@@ -58,7 +66,11 @@ export const ChannelBoard = ({ channel }: { channel: 1 | 2 | 3 | 4 | 5 }) => {
     setControllers([...controllers, controller!]);
   }, [newestNode]);
 
-  console.log(controllers);
+  const removeNode = (node: string) => () => {
+    setControllers(controllers.filter((controller) => controller !== node));
+    channelManager?.removeAudioNode(node);
+  };
+
   return (
     <>
       <BoardContainer>
@@ -67,17 +79,15 @@ export const ChannelBoard = ({ channel }: { channel: 1 | 2 | 3 | 4 | 5 }) => {
             <option value={value}>{value}</option>
           ))}
         </Select>
-        <AddButton
+        <Button
           disabled={options.length === 0}
           onClick={() => {
+            channelContext.addFilter(channel, selectRef.current!.value);
             setNode(selectRef.current!.value as AudioNodeName);
-            setOptions(
-              options.filter((option) => option !== selectRef.current!.value),
-            );
           }}
         >
           +
-        </AddButton>
+        </Button>
       </BoardContainer>
 
       {controllers.map((controller) => {
@@ -85,7 +95,16 @@ export const ChannelBoard = ({ channel }: { channel: 1 | 2 | 3 | 4 | 5 }) => {
 
         if (!Controller.component) return null;
 
-        return <Controller.component {...Controller.props} />;
+        return (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Name>{controller.replace(/\d/g, '')}</Name>
+              <Button onClick={removeNode(controller)}>☠</Button>
+            </div>
+
+            <Controller.component {...Controller.props} />
+          </>
+        );
       })}
 
       <TogglePlayButton
