@@ -38,7 +38,7 @@ export class Reverb extends IAudioNode {
     this.audioNode.normalize = true;
   };
 
-  get props() {
+  get props(): any {
     return {
       onChange: this.setEffect,
     };

@@ -2,10 +2,12 @@ import React, { useContext, useState } from 'react';
 import styled from 'styled-components';
 import { Analyser } from './components/analyser';
 import { ChannelBoard } from './components/channel-board/ChannelBoard';
+import { SpeedController } from './components/node-controllers/SpeedController';
 import { ToggleRecButton } from './components/toggle-rec-button';
 import { useToggle } from './hooks/use-toggle';
 import type { ChannelId } from './managers/AudioManager';
 import { AudioManagerContext } from './providers/audio';
+import type { IChannelManagerContext } from './providers/channel';
 
 const Button = styled.button`
   color: #f37070d6;
@@ -39,27 +41,47 @@ const Channel = styled.article<{ channelId: ChannelId }>`
     margin-bottom: 20px;
   }
 `;
-const App: React.FunctionComponent = ({}) => {
+const App: React.FunctionComponent<{
+  channels: IChannelManagerContext['channels'];
+}> = ({ channels }) => {
   const { audioManager } = useContext(AudioManagerContext);
   const [analyserView, setAnalyserView] = useState(false);
+  const [on, setOn] = useState(false);
   const [bars, toggleBars] = useToggle(false);
 
   return (
     <Grid className="App">
+      {!on && (
+        <Button
+          onClick={() => {
+            audioManager.init();
+            setOn(true);
+          }}
+        >
+          Turn On
+        </Button>
+      )}
       <Button onClick={() => setAnalyserView(true)}>Analyser</Button>
       <Button onClick={toggleBars}>Toggle Visual</Button>
-      {analyserView && <Analyser bars={bars} />}
 
-      {([1, 2, 3, 4, 5] as ChannelId[]).map((channelNumber) => (
-        <Channel channelId={channelNumber}>
-          <ToggleRecButton
-            onRec={() => audioManager.record(channelNumber)}
-            onStop={audioManager.stopRecording}
-          />
+      {analyserView && <Analyser bars={bars} channels={channels} />}
 
-          <ChannelBoard channel={channelNumber} />
-        </Channel>
-      ))}
+      {on &&
+        Object.keys(channels).map((channelNumber) => {
+          const channelId = parseInt(channelNumber, 10) as ChannelId;
+          return (
+            <Channel key={channelId} channelId={channelId}>
+              <ToggleRecButton
+                onRec={() => audioManager.record(channelId)}
+                onStop={audioManager.stopRecording}
+              />
+              <SpeedController
+                onChangeSpeed={audioManager.changeSpeed(channelId)}
+              />
+              <ChannelBoard channelId={channelId} />
+            </Channel>
+          );
+        })}
     </Grid>
   );
 };

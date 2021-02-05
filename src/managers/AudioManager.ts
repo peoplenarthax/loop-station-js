@@ -1,3 +1,4 @@
+import { ThemeConsumer } from 'styled-components';
 import { Channel } from './ChannelManager';
 
 export type ChannelId = 1 | 2 | 3 | 4 | 5;
@@ -7,13 +8,18 @@ type AudioFilter = {
 };
 
 export class AudioManager {
+  private channelsAmount: number;
   private mediaRecorder: any;
+  private channelRecorder: any;
+  private audioContext: AudioContext | undefined;
+  private audioDestination: MediaStreamAudioDestinationNode | undefined;
   private audioBuffer: BlobPart[] = [];
-  private audio: HTMLAudioElement[] | undefined[] = [];
+  private recordingBuffer: BlobPart[] = [];
+  private audio: HTMLAudioElement[] = [];
   private audioFilter: AudioFilter[] = [];
-  private channel: Channel[] | undefined[] = [];
+  private channel: Channel[] = [];
 
-  constructor() {
+  constructor(channelsAmount: number) {
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((audioStream: MediaStream) => {
@@ -23,7 +29,51 @@ export class AudioManager {
           this.audioBuffer.push(e.data);
         };
       });
+
+    this.channelsAmount = channelsAmount;
   }
+
+  init = () => {
+    this.audioContext = new AudioContext();
+
+    this.audioDestination = this.audioContext.createMediaStreamDestination();
+
+    for (let i = 1; i <= this.channelsAmount; i++) {
+      const source = this.audioContext.createMediaElementSource(new Audio());
+
+      const channel = new Channel({ source, context: this.audioContext });
+      this.channel[i] = channel;
+
+      this.channel[i]?.wetGain.connect(this.audioDestination);
+    }
+  };
+
+  recordAllChannels = (setDownloadUrl: (url: string) => void) => {
+    if (this.audioDestination) {
+      this.channelRecorder = new MediaRecorder(this.audioDestination.stream);
+
+      this.channelRecorder.ondataavailable = (e: MessageEvent<BlobPart>) => {
+        this.recordingBuffer.push(e.data);
+      };
+
+      this.channelRecorder.onstop = () => {
+        // TODO: Research AAC export for multi channel
+        const blob = new Blob(this.recordingBuffer, {
+          type: 'audio/ogg; codecs=opus',
+        });
+
+        this.recordingBuffer = [];
+
+        setDownloadUrl(URL.createObjectURL(blob));
+      };
+
+      this.channelRecorder.start();
+    }
+  };
+
+  stopRecordingAllChannels = () => {
+    this.channelRecorder.stop();
+  };
 
   record = (channelId: ChannelId) => {
     this.mediaRecorder.start();
@@ -43,24 +93,14 @@ export class AudioManager {
   };
 
   createChannel = async (channelId: ChannelId) => {
-    if (!this.channel[channelId]) {
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaElementSource(
-        this.audio[channelId]!,
-      );
-
-      const channel = new Channel({ source, context: audioContext });
-      this.channel[channelId] = channel;
-    } else {
-      this.channel[channelId]?.setSource(this.audio[channelId]!);
-    }
+    this.channel[channelId]?.setSource(this.audio[channelId]!);
   };
 
   hasChannel = (channelId: ChannelId): boolean => {
     return !!this.channel[channelId];
   };
 
-  getChannel = (channelId: ChannelId): Channel | undefined => {
+  getChannel = (channelId: ChannelId): Channel => {
     return this.channel[channelId];
   };
 
@@ -68,17 +108,23 @@ export class AudioManager {
     this.mediaRecorder.stop();
   };
 
+  changeSpeed = (channelId: ChannelId) => (speed: number) => {
+    if (this.audio[channelId]) {
+      this.audio[channelId].playbackRate = speed;
+    }
+  };
+
   play = (channelId: ChannelId) => async () => {
     if (this.audio[channelId]) {
-      this.audio[channelId]!.loop = true;
-      this.audio[channelId]!.play();
+      this.audio[channelId].loop = true;
+      this.audio[channelId].play();
     }
   };
 
   stopAudio = (channelId: ChannelId) => () => {
     if (this.audio[channelId]) {
-      this.audio[channelId]!.pause();
-      this.audio[channelId]!.currentTime = 0;
+      this.audio[channelId].pause();
+      this.audio[channelId].currentTime = 0;
     }
   };
 }

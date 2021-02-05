@@ -6,13 +6,13 @@ import React, {
 } from 'react';
 import { Name, Range } from './components';
 
-export const GainController = ({
-  onChangeGain,
+export const SpeedController = ({
+  onChangeSpeed,
 }: {
-  onChangeGain: (value: number) => void;
+  onChangeSpeed: (value: number) => void;
 }) => {
-  const onChangeInputGain = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChangeGain(parseFloat(event.currentTarget.value));
+  const onChangeInputSpeed = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onChangeSpeed(parseFloat(event.currentTarget.value));
   };
 
   return (
@@ -20,10 +20,10 @@ export const GainController = ({
       <Range
         type="range"
         min="0"
-        max="3"
+        max="4"
         defaultValue="1"
-        step="0.01"
-        onChange={onChangeInputGain}
+        step="0.25"
+        onChange={onChangeInputSpeed}
       />
     </div>
   );

@@ -1,75 +1,54 @@
 import React, { createContext, useReducer, useState } from 'react';
 import { AudioNodeName } from '../managers/ChannelManager';
-import { AudioManager } from '../managers/AudioManager';
+import type { ChannelId } from '../managers/AudioManager';
+import { Actions, Channels, initState, reducer } from './channels.reducer';
 
-type IAudioManagerContext = {
-  channels: {
-    1: string[];
-    2: string[];
-    3: string[];
-    4: string[];
-    5: string[];
-  };
-  options: AudioNodeName[];
+export type IChannelManagerContext = {
+  channels: Channels;
+  options: readonly AudioNodeName[];
+  addFilter: (channelId: ChannelId, filter: string) => void;
+  removeFilter: (channelId: ChannelId, filter: string) => void;
 };
 
-const initState = {
-  1: [],
-  2: [],
-  3: [],
-  4: [],
-  5: [],
-};
-export const audioManager = new AudioManager();
-export const ChannelManagerContext = createContext<IAudioManagerContext>({
-  options: [
-    AudioNodeName.reverb,
-    AudioNodeName.lowpass,
-    AudioNodeName.highpass,
-    AudioNodeName.lowshelf,
-    AudioNodeName.highshelf,
-    AudioNodeName.pingpong,
-    AudioNodeName.gain,
-    AudioNodeName.compressor,
-    AudioNodeName.ringmodulator,
-  ],
+const options = [
+  AudioNodeName.reverb,
+  AudioNodeName.lowpass,
+  AudioNodeName.highpass,
+  AudioNodeName.lowshelf,
+  AudioNodeName.highshelf,
+  AudioNodeName.pingpong,
+  AudioNodeName.gain,
+  AudioNodeName.compressor,
+  AudioNodeName.ringmodulator,
+] as const;
+
+export const ChannelManagerContext = createContext<IChannelManagerContext>({
   channels: initState,
+  options,
+  addFilter: () => {},
+  removeFilter: () => {},
 });
-
-const reducer = (state, { type, payload }) => {
-  switch (type) {
-    case 'add':
-      return {
-        ...state,
-        [payload.channelId]: [...state[payload.channelId], payload.filter],
-      };
-    default:
-      throw new Error('No real action');
-  }
-};
 
 export const ChannelProvider: React.FC = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initState);
 
-  console.log(state);
   return (
     <ChannelManagerContext.Provider
       value={{
         channels: state,
+        options,
         addFilter: (channelId, filter) => {
-          dispatch({ type: 'add', payload: { channelId, filter } });
+          dispatch({
+            type: Actions.ADD_FILTER,
+            payload: { channelId, filter },
+          });
         },
-        options: [
-          AudioNodeName.reverb,
-          AudioNodeName.lowpass,
-          AudioNodeName.highpass,
-          AudioNodeName.lowshelf,
-          AudioNodeName.highshelf,
-          AudioNodeName.pingpong,
-          AudioNodeName.gain,
-          AudioNodeName.compressor,
-          AudioNodeName.ringmodulator,
-        ],
+        removeFilter: (channelId, filter) => {
+          dispatch({
+            type: Actions.REMOVE_FILTER,
+            payload: { channelId, filter },
+          });
+        },
       }}
     >
       {children}

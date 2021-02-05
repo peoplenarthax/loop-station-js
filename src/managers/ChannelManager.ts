@@ -44,12 +44,16 @@ export type ChannelNode = any;
 export class Channel {
   public source: MediaElementAudioSourceNode;
   public audioContext: AudioContext;
+  public wetGain: GainNode;
   public audioNodes: any = {};
   private filters: string[] = [];
 
   constructor({ context, source }: ChannelConstructor) {
     this.source = source;
     this.audioContext = context;
+
+    this.wetGain = this.audioContext.createGain();
+    this.wetGain.connect(this.audioContext.destination);
 
     this.applyFilters();
   }
@@ -63,15 +67,19 @@ export class Channel {
   addAudioNode(audioNodeName: AudioNodeName): string {
     const audioNode = FILTER_MAP[audioNodeName](this.audioContext);
     this.audioNodes[audioNode.name] = audioNode;
+
+    // Disconnect the last filter from the audioContext output
     if (this.filters.length > 0) {
       this.audioNodes[this.filters[this.filters.length - 1]].output.disconnect(
-        this.audioContext.destination,
+        this.wetGain,
       );
     } else {
-      this.source.disconnect(this.audioContext.destination);
+      // Disconnect source from output
+      this.source.disconnect(this.wetGain);
     }
     this.filters.push(audioNode.name);
 
+    // Connect all filters
     this.applyFilters();
     return audioNode.name;
   }
@@ -81,13 +89,14 @@ export class Channel {
     const filters = Object.keys(this.audioNodes);
     const index = filters.findIndex((key) => key === nodeName);
 
+    this.filters = this.filters.filter((filter) => filter != nodeName);
     if (index === 0) {
       if (filters.length === 1) {
         this.source.disconnect(this.audioNodes[nodeName].input);
 
         delete this.audioNodes[nodeName];
 
-        this.source.connect(this.audioContext.destination);
+        this.source.connect(this.wetGain);
         return;
       }
       this.source.disconnect(this.audioNodes[nodeName].input);
@@ -117,9 +126,7 @@ export class Channel {
 
     delete this.audioNodes[nodeName];
 
-    this.audioNodes[filters[index - 1]].output.connect(
-      this.audioContext.destination,
-    );
+    this.audioNodes[filters[index - 1]].output.connect(this.wetGain);
   }
 
   getAudioNodeComponent(name: string) {
@@ -131,7 +138,7 @@ export class Channel {
 
   applyFilters() {
     if (this.filters.length === 0) {
-      this.source.connect(this.audioContext.destination);
+      this.source.connect(this.wetGain);
       return;
     }
 
@@ -149,7 +156,7 @@ export class Channel {
     }
 
     this.audioNodes[this.filters[this.filters.length - 1]].output.connect(
-      this.audioContext.destination,
+      this.wetGain,
     );
   }
 }

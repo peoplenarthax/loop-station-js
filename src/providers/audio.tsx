@@ -5,7 +5,7 @@ type IAudioManagerContext = {
   audioManager: AudioManager;
 };
 
-export const audioManager = new AudioManager();
+export const audioManager = new AudioManager(5);
 export const AudioManagerContext = createContext<IAudioManagerContext>({
   audioManager,
 });

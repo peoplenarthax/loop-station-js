@@ -1,9 +1,6 @@
-import { PingPongController } from '../components/node-controllers/PingPongController';
 import { IAudioNode } from './audio-node.base';
 
 export class PingPong extends IAudioNode {
-  public component = PingPongController;
-
   private merger!: ChannelMergerNode;
   private leftDelay!: DelayNode;
   private rightDelay!: DelayNode;
@@ -51,9 +48,16 @@ export class PingPong extends IAudioNode {
 
   get props() {
     return {
-      onChangeDelay: (delay: number) => {
-        this.leftDelay.delayTime.value = delay;
-        this.rightDelay.delayTime.value = delay;
+      pingpong: {
+        min: 0.01,
+        max: 3,
+        defaultValue: this.rightDelay.delayTime.value,
+        step: 0.01,
+        displayName: 'Delay',
+        changeFunction: (delay: number) => {
+          this.leftDelay.delayTime.value = delay;
+          this.rightDelay.delayTime.value = delay;
+        },
       },
     };
   }

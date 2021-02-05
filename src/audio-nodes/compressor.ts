@@ -1,9 +1,7 @@
-import { CompressorController } from '../components/node-controllers/CompressorController';
 import { IAudioNode } from './audio-node.base';
 
 export class DynamicCompressor extends IAudioNode {
   public audioNode: DynamicsCompressorNode;
-  public component = CompressorController;
 
   constructor(audioContext: AudioContext) {
     super('compressor', audioContext);
@@ -16,8 +14,8 @@ export class DynamicCompressor extends IAudioNode {
   }
 
   initAudioNode = async () => {
-    this.audioNode.threshold.value = -50;
-    this.audioNode.knee.value = 40;
+    this.audioNode.threshold.value = -30;
+    this.audioNode.knee.value = 10;
     this.audioNode.ratio.value = 12;
     this.audioNode.attack.value = 0;
     this.audioNode.release.value = 0.25;
@@ -25,17 +23,45 @@ export class DynamicCompressor extends IAudioNode {
 
   get props() {
     return {
-      onChangeKnee: (value: number) => {
-        this.audioNode.knee.value = value;
+      knee: {
+        min: 0,
+        max: 40,
+        defaultValue: this.audioNode.knee.value,
+        step: 1,
+        displayName: 'Knee',
+        changeFunction: (value: number) => {
+          this.audioNode.knee.value = value;
+        },
       },
-      onChangeThreshold: (value: number) => {
-        this.audioNode.threshold.value = value;
+      threshold: {
+        min: -100,
+        max: 0,
+        defaultValue: this.audioNode.threshold.value,
+        step: 1,
+        displayName: 'Threshold',
+        changeFunction: (value: number) => {
+          this.audioNode.threshold.value = value;
+        },
       },
-      onChangeRatio: (value: number) => {
-        this.audioNode.ratio.value = value;
+      ratio: {
+        min: 1,
+        max: 20,
+        defaultValue: this.audioNode.ratio.value,
+        step: 1,
+        displayName: 'Ratio',
+        changeFunction: (value: number) => {
+          this.audioNode.ratio.value = value;
+        },
       },
-      onChangeAttack: (value: number) => {
-        this.audioNode.attack.value = value;
+      attack: {
+        min: 1,
+        max: 20,
+        defaultValue: this.audioNode.attack.value,
+        step: 1,
+        displayName: 'Attack',
+        changeFunction: (value: number) => {
+          this.audioNode.attack.value = value;
+        },
       },
     };
   }

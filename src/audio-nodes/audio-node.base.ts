@@ -1,4 +1,16 @@
 import type { ReactNode } from 'react';
+import { DynamicController } from '../components/node-controllers/DynamicController';
+
+type ISpecs = {
+  [k: string]: {
+    displayName: string;
+    min: number;
+    max: number;
+    defaultValue: number;
+    step?: number;
+    changeFunction: (value: number) => void;
+  };
+};
 
 let nodeCount = 0;
 export class IAudioNode {
@@ -6,7 +18,7 @@ export class IAudioNode {
   public name: string;
   public input!: AudioNode;
   public output!: AudioNode;
-  public component: ReactNode;
+  public component: ReactNode = DynamicController;
 
   constructor(name: string, audioContext: AudioContext) {
     this.name = `${name}${nodeCount++}`;
@@ -15,7 +27,7 @@ export class IAudioNode {
 
   initAudioNode = async () => {};
 
-  get props() {
+  get props(): ISpecs {
     return {};
   }
 }

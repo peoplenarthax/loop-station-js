@@ -3,13 +3,21 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import './index.css';
 import { AudioProvider } from './providers/audio';
-import { ChannelProvider } from './providers/channel';
+import {
+  ChannelManagerContext,
+  ChannelProvider,
+  IChannelManagerContext,
+} from './providers/channel';
 
 ReactDOM.render(
   <React.StrictMode>
     <ChannelProvider>
       <AudioProvider>
-        <App />
+        <ChannelManagerContext.Consumer>
+          {({ channels }: IChannelManagerContext) => (
+            <App channels={channels} />
+          )}
+        </ChannelManagerContext.Consumer>
       </AudioProvider>
     </ChannelProvider>
   </React.StrictMode>,

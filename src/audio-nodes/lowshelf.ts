@@ -1,9 +1,7 @@
-import { ShelfFilterController } from '../components/node-controllers/ShelfFilterController';
 import { IAudioNode } from './audio-node.base';
 
 export class Lowshelf extends IAudioNode {
   public audioNode: BiquadFilterNode;
-  public component = ShelfFilterController;
 
   constructor(audioContext: AudioContext) {
     super('lowshelf', audioContext);
@@ -23,11 +21,25 @@ export class Lowshelf extends IAudioNode {
 
   get props() {
     return {
-      onChangeGain: (value: number) => {
-        this.audioNode.gain.value = value;
+      gain: {
+        step: 0.1,
+        min: 0,
+        max: 3,
+        defaultValue: this.audioNode.gain.value,
+        displayName: 'Gain',
+        changeFunction: (value: number) => {
+          this.audioNode.gain.value = value;
+        },
       },
-      onChangeFreq: (value: number) => {
-        this.audioNode.frequency.value = value;
+      freq: {
+        step: 100,
+        min: 20,
+        max: 20000,
+        defaultValue: this.audioNode.frequency.value,
+        displayName: 'Frequency',
+        changeFunction: (value: number) => {
+          this.audioNode.frequency.value = value;
+        },
       },
     };
   }

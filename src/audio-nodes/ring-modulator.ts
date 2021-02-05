@@ -1,9 +1,7 @@
-import { RingModulatorController } from '../components/node-controllers/RingModulatorController';
 import { IAudioNode } from './audio-node.base';
 import { DiodeNode } from './DiodeNode';
 
 export class DubDelay extends IAudioNode {
-  public component = RingModulatorController;
   private outputNode!: GainNode;
   private vOsc!: OscillatorNode;
   private vOscGain!: GainNode;
@@ -89,11 +87,25 @@ export class DubDelay extends IAudioNode {
 
   get props() {
     return {
-      onChangeDistortion: (distortion: number) => {
-        this.diodes.forEach((diode) => diode.setDistortion(distortion));
+      distortion: {
+        min: 0,
+        max: 3000,
+        defaultValue: 20,
+        step: 20,
+        displayName: 'Distortion',
+        changeFunction: (distortion: number) => {
+          this.diodes.forEach((diode) => diode.setDistortion(distortion));
+        },
       },
-      onChangeSpeed: (speed: number) => {
-        this.vOsc.frequency.value = speed;
+      speed: {
+        min: 0.5,
+        max: 50,
+        defaultValue: 1,
+        step: 0.5,
+        displayName: 'Speed',
+        changeFunction: (speed: number) => {
+          this.vOsc.frequency.value = speed;
+        },
       },
     };
   }

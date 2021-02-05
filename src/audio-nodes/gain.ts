@@ -1,9 +1,6 @@
-import { GainController } from '../components/node-controllers/GainController';
 import { IAudioNode } from './audio-node.base';
-
 export class Gain extends IAudioNode {
   public audioNode: GainNode;
-  public component = GainController;
 
   constructor(audioContext: AudioContext) {
     super('gain', audioContext);
@@ -21,8 +18,13 @@ export class Gain extends IAudioNode {
 
   get props() {
     return {
-      onChangeGain: (value: number) => {
-        this.audioNode.gain.value = value;
+      gain: {
+        displayName: 'Gain',
+        min: 0,
+        max: 3,
+        defaultValue: this.audioNode.gain.value,
+        step: 0.1,
+        changeFunction: (value: number) => (this.audioNode.gain.value = value),
       },
     };
   }
