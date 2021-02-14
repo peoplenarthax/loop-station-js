@@ -10,6 +10,7 @@ import {
   PingPong,
   PitchShift,
   Reverb,
+  FoldbackDistortion,
 } from '../audio-nodes';
 
 export enum AudioNodeName {
@@ -23,6 +24,7 @@ export enum AudioNodeName {
   lowshelf = 'lowshelf',
   ringmodulator = 'ringmodulator',
   pitchshift = 'pitchshift',
+  foldbackdistortion = 'foldbackdistortion',
 }
 
 export const NODE_MAP: {
@@ -38,4 +40,6 @@ export const NODE_MAP: {
   lowshelf: (context: AudioContext) => new Lowshelf(context),
   ringmodulator: (context: AudioContext) => new DubDelay(context),
   pitchshift: (context: AudioContext) => new PitchShift(context),
+  foldbackdistortion: (context: AudioContext) =>
+    new FoldbackDistortion(context),
 };

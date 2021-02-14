@@ -8,4 +8,5 @@ export * from '../audio-nodes/lowshelf';
 export * from '../audio-nodes/ring-modulator';
 export * from '../audio-nodes/pitch-shift';
 export * from '../audio-nodes/highshelf';
+export * from '../audio-nodes/foldback-distortion';
 export * from '../audio-nodes/audio-node.base';

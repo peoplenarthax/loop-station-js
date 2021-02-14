@@ -27,6 +27,10 @@ export class AudioManager {
 
   init = () => {
     this.audioContext = new AudioContext();
+    this.audioContext.audioWorklet.addModule(
+      './worklet/foldback-distortion.js',
+    );
+
     this.audioDestination = this.audioContext.createMediaStreamDestination();
 
     navigator.mediaDevices
