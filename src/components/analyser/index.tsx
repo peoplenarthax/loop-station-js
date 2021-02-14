@@ -4,16 +4,21 @@ import type { ChannelId } from '../../managers/AudioManager';
 import { audioManager, AudioManagerContext } from '../../providers/audio';
 import { AudioVisualiser } from './visualizer';
 
+type AnalyserProps = {
+  bars: boolean;
+  channels: IChannelManagerContext['channels'];
+  selectedChannel: ChannelId;
+  selectedFilter: string;
+};
 export class Analyser extends Component<
-  { bars: boolean; channels: IChannelManagerContext['channels'] },
+  AnalyserProps,
   { audioData: Uint8Array }
 > {
-  channelId: ChannelId = 1;
   static contextType = AudioManagerContext;
   audioContext: AudioContext | undefined;
   analyser: AnalyserNode | undefined;
   dataArray: Uint8Array | undefined;
-  source: MediaStreamAudioSourceNode | undefined;
+  source: AudioNode | undefined;
   rafId: number | undefined;
   step: string | undefined;
   audioNodes: string[] = [];
@@ -21,6 +26,8 @@ export class Analyser extends Component<
   constructor(props: {
     bars: boolean;
     channels: IChannelManagerContext['channels'];
+    selectedChannel: ChannelId;
+    selectedFilter: string;
   }) {
     super(props);
     this.state = { audioData: new Uint8Array(0) };
@@ -36,34 +43,26 @@ export class Analyser extends Component<
     this.rafId = requestAnimationFrame(this.tick);
   };
 
-  updateStep = (e: SyntheticEvent<HTMLSelectElement>) => {
-    const value = e.currentTarget.value;
-    this.step = value;
-    this.updateAnalyser();
-  };
-
-  updateChannel = (e: SyntheticEvent<HTMLSelectElement>) => {
-    const value = e.currentTarget.value;
-    this.channelId = parseInt(value, 10) as ChannelId;
-    this.step = undefined;
-    this.updateAnalyser();
+  componentDidUpdate = (prevProps: AnalyserProps) => {
+    if (
+      prevProps.selectedChannel !== this.props.selectedChannel ||
+      prevProps.selectedFilter !== this.props.selectedFilter
+    ) {
+      this.updateAnalyser();
+    }
   };
 
   updateAnalyser = () => {
     this.analyser = audioManager
-      .getChannel(this.channelId!)
+      .getChannel(this.props.selectedChannel!)
       .audioContext.createAnalyser();
     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
     this.source =
       !this.step || this.step === 'source'
-        ? audioManager.getChannel(this.channelId!).source
-        : audioManager.getChannel(this.channelId!).audioNodes[this.step].output;
-
-    this.audioNodes = [
-      'source',
-      ...Object.keys(audioManager.getChannel(this.channelId!).audioNodes),
-    ];
+        ? audioManager.getChannel(this.props.selectedChannel).source
+        : audioManager.getChannel(this.props.selectedChannel).getNode(this.step)
+            .output;
 
     this.source?.connect(this.analyser);
 
@@ -83,21 +82,6 @@ export class Analyser extends Component<
           bars={this.props.bars}
           audioData={this.state.audioData}
         />
-
-        <select onChange={this.updateChannel} defaultValue="">
-          {Object.keys(this.props.channels).map((channelId) => (
-            <option key={channelId} value={channelId}>
-              {channelId}
-            </option>
-          ))}
-        </select>
-
-        <select onChange={this.updateStep}>
-          {this.props.channels[this.channelId] &&
-            this.props.channels[this.channelId].map((audioNode) => (
-              <option value={audioNode}>{audioNode}</option>
-            ))}
-        </select>
       </div>
     );
   }

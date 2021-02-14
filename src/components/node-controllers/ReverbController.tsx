@@ -17,12 +17,14 @@ const BoardContainer = styled.div`
 const REVERB_OPTIONS = ['chamber', 'slinky'];
 
 export const ReverbController = ({
-  onChange,
+  specs,
 }: {
-  onChange: (reverb: string) => void;
+  specs: {
+    onChange: (reverb: string) => void;
+  };
 }) => {
   const onChangeReverb = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange(event.currentTarget.value);
+    specs.onChange(event.currentTarget.value);
   };
 
   return (

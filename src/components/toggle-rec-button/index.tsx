@@ -3,23 +3,15 @@ import { useToggle } from '../../hooks/use-toggle';
 import { CircularButton, RecIcon } from './styles';
 
 type RecButtonProps = {
-  onRec: () => void;
-  onStop: () => void;
+  onClick: () => void;
+  isRecording: boolean;
 };
 export const ToggleRecButton: React.FC<RecButtonProps> = ({
-  onRec,
-  onStop,
+  onClick,
+  isRecording,
 }) => {
-  const [isRecording, toggle] = useToggle(false);
-
-  const onToggle = React.useCallback(() => {
-    isRecording ? onStop() : onRec();
-
-    toggle();
-  }, [isRecording]);
-
   return (
-    <CircularButton isRecording={isRecording} onClick={onToggle}>
+    <CircularButton isRecording={isRecording} onClick={onClick}>
       <RecIcon isRecording={isRecording} />
     </CircularButton>
   );

@@ -11,35 +11,47 @@ export class AudioManager {
   private channelsAmount: number;
   private mediaRecorder: any;
   private channelRecorder: any;
-  private audioContext: AudioContext | undefined;
-  private audioDestination: MediaStreamAudioDestinationNode | undefined;
+  public audioContext: AudioContext | undefined;
+  public audioDestination: MediaStreamAudioDestinationNode | undefined;
   private audioBuffer: BlobPart[] = [];
   private recordingBuffer: BlobPart[] = [];
   private audio: HTMLAudioElement[] = [];
-  private audioFilter: AudioFilter[] = [];
   private channel: Channel[] = [];
+  private inputVoice!: MediaStreamAudioSourceNode;
+  public voiceGain!: GainNode;
+  private voiceDestination!: MediaStreamAudioDestinationNode;
 
   constructor(channelsAmount: number) {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((audioStream: MediaStream) => {
-        this.mediaRecorder = new MediaRecorder(audioStream);
-
-        this.mediaRecorder.ondataavailable = (e: MessageEvent<BlobPart>) => {
-          this.audioBuffer.push(e.data);
-        };
-      });
-
     this.channelsAmount = channelsAmount;
   }
 
   init = () => {
     this.audioContext = new AudioContext();
-
     this.audioDestination = this.audioContext.createMediaStreamDestination();
 
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((audioStream: MediaStream) => {
+        this.inputVoice = this.audioContext!.createMediaStreamSource(
+          audioStream,
+        );
+
+        this.voiceGain = this.audioContext!.createGain();
+        this.voiceDestination = this.audioContext!.createMediaStreamDestination();
+
+        this.mediaRecorder = new MediaRecorder(this.voiceDestination.stream);
+
+        this.mediaRecorder.ondataavailable = (e: MessageEvent<BlobPart>) => {
+          this.audioBuffer.push(e.data);
+        };
+
+        this.inputVoice.connect(this.voiceGain);
+        this.voiceGain.connect(this.voiceDestination);
+      });
+
     for (let i = 1; i <= this.channelsAmount; i++) {
-      const source = this.audioContext.createMediaElementSource(new Audio());
+      this.audio[i] = new Audio();
+      const source = this.audioContext.createMediaElementSource(this.audio[i]);
 
       const channel = new Channel({ source, context: this.audioContext });
       this.channel[i] = channel;
@@ -48,7 +60,7 @@ export class AudioManager {
     }
   };
 
-  recordAllChannels = (setDownloadUrl: (url: string) => void) => {
+  recordAllChannels = () => {
     if (this.audioDestination) {
       this.channelRecorder = new MediaRecorder(this.audioDestination.stream);
 
@@ -57,14 +69,13 @@ export class AudioManager {
       };
 
       this.channelRecorder.onstop = () => {
-        // TODO: Research AAC export for multi channel
         const blob = new Blob(this.recordingBuffer, {
-          type: 'audio/ogg; codecs=opus',
+          type: 'audio/flac; codecs=flac',
         });
 
         this.recordingBuffer = [];
 
-        setDownloadUrl(URL.createObjectURL(blob));
+        window.open(URL.createObjectURL(blob));
       };
 
       this.channelRecorder.start();
@@ -75,25 +86,66 @@ export class AudioManager {
     this.channelRecorder.stop();
   };
 
-  record = (channelId: ChannelId) => {
+  record = () => {
     this.mediaRecorder.start();
+  };
 
+  stopRecording = (channelId: ChannelId) => {
     this.mediaRecorder.onstop = () => {
       const blob = new Blob(this.audioBuffer, {
-        type: 'audio/ogg; codecs=opus',
+        type: 'audio/flac; codecs=flac',
       });
       this.audioBuffer = [];
 
       const audioUrl = URL.createObjectURL(blob);
-      this.audio[channelId]?.pause();
+      this.audio[channelId].pause();
       this.audio[channelId] = new Audio(audioUrl);
 
       this.createChannel(channelId);
     };
+
+    this.mediaRecorder.stop();
   };
 
-  createChannel = async (channelId: ChannelId) => {
-    this.channel[channelId]?.setSource(this.audio[channelId]!);
+  overdub = (channelId: ChannelId) => {
+    if (Number.isNaN(this.audio[channelId].duration)) {
+      return;
+    }
+
+    this.channel[channelId].syncNode.connect(this.voiceDestination);
+
+    this.audio[channelId].play();
+    this.audio[channelId].loop = false;
+
+    this.mediaRecorder.start(this.audio[channelId].duration * 1000);
+
+    this.audio[channelId].onended = () => {
+      this.stopRecording(channelId);
+      this.channel[channelId].syncNode.disconnect(this.voiceDestination);
+    };
+  };
+
+  startAllChannels = () => {
+    this.channel.forEach((channel) => {
+      channel.play();
+    });
+  };
+
+  stopAllChannels = () => {
+    this.channel.forEach((channel) => {
+      channel.stopAudio();
+    });
+  };
+
+  createChannel = (channelId: ChannelId) => {
+    this.channel[channelId].setSource(this.audio[channelId]!);
+  };
+
+  uploadAudioToChannel = (channelId: ChannelId, file: File) => {
+    const audioElement = new Audio(URL.createObjectURL(file));
+
+    this.audio[channelId] = audioElement;
+    this.channel[channelId].setSource(this.audio[channelId]);
   };
 
   hasChannel = (channelId: ChannelId): boolean => {
@@ -104,27 +156,9 @@ export class AudioManager {
     return this.channel[channelId];
   };
 
-  stopRecording = () => {
-    this.mediaRecorder.stop();
-  };
-
   changeSpeed = (channelId: ChannelId) => (speed: number) => {
     if (this.audio[channelId]) {
       this.audio[channelId].playbackRate = speed;
-    }
-  };
-
-  play = (channelId: ChannelId) => async () => {
-    if (this.audio[channelId]) {
-      this.audio[channelId].loop = true;
-      this.audio[channelId].play();
-    }
-  };
-
-  stopAudio = (channelId: ChannelId) => () => {
-    if (this.audio[channelId]) {
-      this.audio[channelId].pause();
-      this.audio[channelId].currentTime = 0;
     }
   };
 }

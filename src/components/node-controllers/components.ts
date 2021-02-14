@@ -27,10 +27,10 @@ export const Label = styled.label`
   margin-bottom: 2px;
 `;
 
-export const Range = styled.input`
+export const Range = styled.input.attrs({ type: 'range' })`
   -webkit-appearance: none;
   margin-bottom: 4px;
-
+  background: transparent;
   &:focus {
     outline: none;
   }

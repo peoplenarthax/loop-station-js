@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useState } from 'react';
-import { AudioNodeName } from '../managers/ChannelManager';
+import { AudioNodeName } from '../managers/constants';
 import type { ChannelId } from '../managers/AudioManager';
 import { Actions, Channels, initState, reducer } from './channels.reducer';
 
@@ -20,6 +20,7 @@ const options = [
   AudioNodeName.gain,
   AudioNodeName.compressor,
   AudioNodeName.ringmodulator,
+  AudioNodeName.pitchshift,
 ] as const;
 
 export const ChannelManagerContext = createContext<IChannelManagerContext>({

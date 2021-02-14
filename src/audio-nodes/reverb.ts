@@ -45,7 +45,6 @@ export class Reverb extends IAudioNode {
   }
 
   setEffect = async (effect: string) => {
-    console.log(effect);
     this.audioNode.buffer = await this.audioContext.decodeAudioData(
       base64ToArrayBuffer(reverbEffect[effect as keyof typeof reverbEffect]),
     );

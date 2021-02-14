@@ -13,11 +13,7 @@ ReactDOM.render(
   <React.StrictMode>
     <ChannelProvider>
       <AudioProvider>
-        <ChannelManagerContext.Consumer>
-          {({ channels }: IChannelManagerContext) => (
-            <App channels={channels} />
-          )}
-        </ChannelManagerContext.Consumer>
+        <App />
       </AudioProvider>
     </ChannelProvider>
   </React.StrictMode>,

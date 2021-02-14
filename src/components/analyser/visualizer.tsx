@@ -2,6 +2,7 @@ import React, { useRef, useEffect, Component } from 'react';
 import styled from 'styled-components';
 
 const Canvas = styled.canvas`
+  max-width: 260px;
   border-radius: 15px;
   padding: 15px;
   grid-column: span 2;

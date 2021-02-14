@@ -1,4 +1,5 @@
-import styled, { keyframes, css } from 'styled-components';
+import styled, { css } from 'styled-components';
+import { CommonCircularButton } from '../common';
 
 export const RecIcon = styled.div<{ isRecording: boolean }>`
   width: 12px;
@@ -14,17 +15,11 @@ const clicked = css`
   box-shadow: inset 5px 5px 10px #ccc8c8, inset -5px -5px 10px #ffffff;
 `;
 
-export const CircularButton = styled.button<{ isRecording: boolean }>`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+export const CircularButton = styled(CommonCircularButton)<{
+  isRecording: boolean;
+}>`
   width: 30px;
   height: 30px;
-  border: none;
-  border-radius: 50%;
-  background: #fffafa;
-  box-shadow: 7px 7px 14px #ccc8c8, -7px -7px 14px #ffffff;
-  outline: none;
   transition: all 250ms ease-in-out;
 
   &:hover {

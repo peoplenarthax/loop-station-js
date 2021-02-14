@@ -1,33 +1,24 @@
 import React, { useContext, useState } from 'react';
 import styled from 'styled-components';
-import { Analyser } from './components/analyser';
+import { AnalyserPanel } from './components/analysis-panel';
 import { ChannelBoard } from './components/channel-board/ChannelBoard';
-import { SpeedController } from './components/node-controllers/SpeedController';
-import { ToggleRecButton } from './components/toggle-rec-button';
+import { Button } from './components/common';
+import { RecordingPanel } from './components/recoring-panel';
+import { VoicePanel } from './components/voice-panel';
 import { useToggle } from './hooks/use-toggle';
 import type { ChannelId } from './managers/AudioManager';
 import { AudioManagerContext } from './providers/audio';
-import type { IChannelManagerContext } from './providers/channel';
-
-const Button = styled.button`
-  color: #f37070d6;
-  max-height: 34px;
-  max-width: 135px;
-  border: none;
-  border-radius: 11px;
-  background: #fffafa;
-  box-shadow: 9px 9px 17px #d9d5d5, -9px -9px 17px #ffffff;
-`;
+import { ChannelManagerContext } from './providers/channel';
 
 const Grid = styled.main`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-template-rows: 220px 1fr;
   grid-template-areas:
     'general general general general general'
     'channel1 channel2 channel3 channel4 channel5';
   grid-row-gap: 20px;
-  max-width: 950px;
+  max-width: 1050px;
   margin: 20px auto;
 `;
 
@@ -41,43 +32,41 @@ const Channel = styled.article<{ channelId: ChannelId }>`
     margin-bottom: 20px;
   }
 `;
-const App: React.FunctionComponent<{
-  channels: IChannelManagerContext['channels'];
-}> = ({ channels }) => {
+
+const TurnOnButton = styled(Button)`
+  max-height: 30px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+`;
+const App: React.FunctionComponent = () => {
   const { audioManager } = useContext(AudioManagerContext);
-  const [analyserView, setAnalyserView] = useState(false);
+  const { channels } = useContext(ChannelManagerContext);
   const [on, setOn] = useState(false);
   const [bars, toggleBars] = useToggle(false);
 
   return (
     <Grid className="App">
       {!on && (
-        <Button
+        <TurnOnButton
           onClick={() => {
             audioManager.init();
             setOn(true);
           }}
         >
           Turn On
-        </Button>
+        </TurnOnButton>
       )}
-      <Button onClick={() => setAnalyserView(true)}>Analyser</Button>
-      <Button onClick={toggleBars}>Toggle Visual</Button>
 
-      {analyserView && <Analyser bars={bars} channels={channels} />}
+      <VoicePanel />
+      <RecordingPanel />
+      <AnalyserPanel />
 
       {on &&
         Object.keys(channels).map((channelNumber) => {
           const channelId = parseInt(channelNumber, 10) as ChannelId;
           return (
             <Channel key={channelId} channelId={channelId}>
-              <ToggleRecButton
-                onRec={() => audioManager.record(channelId)}
-                onStop={audioManager.stopRecording}
-              />
-              <SpeedController
-                onChangeSpeed={audioManager.changeSpeed(channelId)}
-              />
               <ChannelBoard channelId={channelId} />
             </Channel>
           );
