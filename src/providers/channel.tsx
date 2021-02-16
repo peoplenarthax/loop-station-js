@@ -22,6 +22,7 @@ const options = [
   AudioNodeName.ringmodulator,
   AudioNodeName.pitchshift,
   AudioNodeName.foldbackdistortion,
+  AudioNodeName.bitcrusher,
 ] as const;
 
 export const ChannelManagerContext = createContext<IChannelManagerContext>({

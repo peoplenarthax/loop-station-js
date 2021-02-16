@@ -11,6 +11,7 @@ import {
   PitchShift,
   Reverb,
   FoldbackDistortion,
+  BitCrusher,
 } from '../audio-nodes';
 
 export enum AudioNodeName {
@@ -25,8 +26,11 @@ export enum AudioNodeName {
   ringmodulator = 'ringmodulator',
   pitchshift = 'pitchshift',
   foldbackdistortion = 'foldbackdistortion',
+  bitcrusher = 'bitcrusher',
 }
 
+// const createAudioNode = (AudioNode: AudioNode) => (context: AudioContext) =>
+//   AudioNode;
 export const NODE_MAP: {
   [key in AudioNodeName]: (context: AudioContext) => IAudioNode;
 } = {
@@ -42,4 +46,5 @@ export const NODE_MAP: {
   pitchshift: (context: AudioContext) => new PitchShift(context),
   foldbackdistortion: (context: AudioContext) =>
     new FoldbackDistortion(context),
+  bitcrusher: (context: AudioContext) => new BitCrusher(context),
 };
