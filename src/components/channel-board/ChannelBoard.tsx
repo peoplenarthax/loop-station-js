@@ -59,7 +59,7 @@ const Button = styled.button`
   box-shadow: 3px 3px 6px #d5d5d5, -3px -3px 6px #ffffff;
 `;
 
-const DropZone = styled.div<{ over: boolean }>`
+const DropZone = styled.div<{ over?: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -111,7 +111,7 @@ export const ChannelBoard = ({ channelId }: { channelId: ChannelId }) => {
     toggleRecording();
   }, [recording]);
 
-  const onDrop = (e: DragEvent) => {
+  const onDrop = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -211,7 +211,7 @@ export const ChannelBoard = ({ channelId }: { channelId: ChannelId }) => {
               <Name>{filter.replace(/\d/g, '')}</Name>
               <Button onClick={removeNode(filter)}>☠</Button>
             </div>
-
+            {/* @ts-ignore */}
             <Controller.component specs={Controller.props} />
           </div>
         );

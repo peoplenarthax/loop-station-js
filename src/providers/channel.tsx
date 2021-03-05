@@ -23,6 +23,7 @@ const options = [
   AudioNodeName.pitchshift,
   AudioNodeName.foldbackdistortion,
   AudioNodeName.bitcrusher,
+  AudioNodeName.reversedelay,
 ] as const;
 
 export const ChannelManagerContext = createContext<IChannelManagerContext>({

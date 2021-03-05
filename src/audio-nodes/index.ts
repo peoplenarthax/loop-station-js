@@ -10,4 +10,5 @@ export * from '../audio-nodes/pitch-shift';
 export * from '../audio-nodes/highshelf';
 export * from '../audio-nodes/foldback-distortion';
 export * from '../audio-nodes/bit-crusher';
+export * from '../audio-nodes/ReverseDelay';
 export * from '../audio-nodes/audio-node.base';

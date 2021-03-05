@@ -12,6 +12,7 @@ import {
   Reverb,
   FoldbackDistortion,
   BitCrusher,
+  ReverseDelay,
 } from '../audio-nodes';
 
 export enum AudioNodeName {
@@ -27,6 +28,7 @@ export enum AudioNodeName {
   pitchshift = 'pitchshift',
   foldbackdistortion = 'foldbackdistortion',
   bitcrusher = 'bitcrusher',
+  reversedelay = 'reversedelay',
 }
 
 // const createAudioNode = (AudioNode: AudioNode) => (context: AudioContext) =>
@@ -47,4 +49,5 @@ export const NODE_MAP: {
   foldbackdistortion: (context: AudioContext) =>
     new FoldbackDistortion(context),
   bitcrusher: (context: AudioContext) => new BitCrusher(context),
+  reversedelay: (context: AudioContext) => new ReverseDelay(context),
 };

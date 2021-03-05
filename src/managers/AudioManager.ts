@@ -32,6 +32,7 @@ export class AudioManager {
       './worklet/foldback-distortion.js',
     );
     this.audioContext.audioWorklet.addModule('./worklet/bit-crusher.js');
+    this.audioContext.audioWorklet.addModule('./worklet/reverse-delay.js');
 
     this.audioDestination = this.audioContext.createMediaStreamDestination();
 

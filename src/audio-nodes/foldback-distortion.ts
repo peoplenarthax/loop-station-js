@@ -24,8 +24,8 @@ export class FoldbackDistortion extends IAudioNode {
         displayName: 'Cut-Off',
         changeFunction: (value: number) => {
           this.audioNode.parameters
-            .get('cutOff')
-            .setValueAtTime(value, this.audioContext.currentTime);
+            ?.get('cutOff')
+            ?.setValueAtTime(value, this.audioContext.currentTime);
         },
       },
     };
